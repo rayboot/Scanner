@@ -452,6 +452,23 @@ void findPoint(CvPoint2D32f scrQuad[], CvPoint2D32f result[])
 	}
 }
 
+void findPointFromVector(vector<Point> scrVector, vector<Point>& result)
+{
+	CvPoint2D32f scrQuad[scrVector.size()], handledScrQuad[scrVector.size()];
+
+	for (int i = 0 ; i < scrVector.size(); i++)
+	{
+		scrQuad[i].x = scrVector[i].x;
+		scrQuad[i].y = scrVector[i].y;
+	}
+	findPoint(scrQuad, handledScrQuad);
+	int len = sizeof(handledScrQuad) / sizeof(handledScrQuad[0]);
+	for (int i = 0 ; i < len; i++)
+	{
+		result.push_back(handledScrQuad[i]);
+	}
+}
+
 /**
  * ÇÐÍ¼·½·¨
  */
@@ -526,12 +543,15 @@ void crop(const char* file, vector<Point> points, int jniside[], const char* res
 	imwrite(resultFile, tmp_mat);
 //	dst.release();
 //	blurred.release();
-	LOGD("Release op start");
+	LOGD("Release op tmp_mat.release();");
 //	image.release();
 	tmp_mat.release();
+	LOGD("Release op cropped_image.release();");
 	cropped_image.release();
+	LOGD("Release op cvReleaseMat(&wap_matrix);");
 	cvReleaseMat(&wap_matrix);
-	cvReleaseImage(&dst);
+//	LOGD("Release op cvReleaseImage(&dst);");
+//	cvReleaseImage(&dst);
 //	cvReleaseImage(&src);
 	LOGD("crop end");
 }

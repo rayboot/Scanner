@@ -14,14 +14,20 @@ JNIEXPORT jobjectArray JNICALL Java_com_rayboot_scantool_cv_OpenCVManager_nScan(
 
 	result = env->NewObjectArray(size, intArrCls, NULL);
 
-	vector<Point> v = squares[0];
-	if (squares.size() < 1 || v.size() < size)
+    if (squares.size() < 1)
 	{
 		return NULL;
 	}
+	vector<Point> v = squares[0];
+    if (v.size() < size)
+    {
+        return NULL;
+    }
+	vector<Point> resultVector;
+	findPointFromVector(v, resultVector);
 	for (int i = 0 ; i < size ; i ++)
 	{
-		Point point = v[i];
+		Point point = resultVector[i];
 		jint tmp[2]; /* make sure it is large enough! */
 		tmp[0] = point.x;
 		tmp[1] = point.y;

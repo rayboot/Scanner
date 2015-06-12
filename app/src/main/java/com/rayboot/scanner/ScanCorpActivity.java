@@ -10,19 +10,15 @@ import android.os.Message;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
 import com.rayboot.scantool.constant.OpenCVConstant;
+import com.rayboot.scantool.cv.BaseLoaderCallback;
 import com.rayboot.scantool.cv.ImageHandleListener;
 import com.rayboot.scantool.cv.OpenCVManager;
 import com.rayboot.scantool.view.CropImageView;
-
-import org.opencv.android.BaseLoaderCallback;
-import org.opencv.android.LoaderCallbackInterface;
 
 import java.io.File;
 import java.util.HashMap;
@@ -56,6 +52,14 @@ public class ScanCorpActivity extends ActionBarActivity implements ImageHandleLi
                         CropImageView view = new CropImageView(ScanCorpActivity.this);
                         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                         view.setLayoutParams(params);
+                        int width = view.getWidth();
+                        int height = view.getHeight();
+                        float ratio = (float) width / (float) mScrBitmap.getWidth();
+                        float aspectRatio = (float)mScrBitmap.getHeight() / (float)mScrBitmap.getWidth();
+                        float imageHight = ((float) width) * aspectRatio;
+                        float offset = ((float) height - imageHight) / 2.0F;
+                        view.setRatio(ratio);
+                        view.setOffset(offset);
                         view.setImageBitmap(mScrBitmap);
                         view.setCropPiontMap(getPiontMap());
                         mContentLayout.addView(view);
@@ -77,22 +81,15 @@ public class ScanCorpActivity extends ActionBarActivity implements ImageHandleLi
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
 
         @Override
-        public void onManagerConnected(int status) {
-            switch (status) {
-                case LoaderCallbackInterface.SUCCESS:
-                    Log.i(TAG, "OpenCV loaded successfully");
-                    File file = new File(mContentImagePath);
+        public void onManagerConnected() {
+            Log.i(TAG, "OpenCV loaded successfully");
+            File file = new File(mContentImagePath);
 
-                    if (file.exists()) {
-                        //若该文件存在
-                        mOpenCVManager.findBrim(mContentImagePath);
+            if (file.exists()) {
+                //若该文件存在
+                mOpenCVManager.findBrim(mContentImagePath);
 
-                        showProgressDialog(getString(R.string.scan_dialog_title), getString(R.string.scan_dialog_msg));
-                    }
-                    break;
-                default:
-                    super.onManagerConnected(status);
-                    break;
+                showProgressDialog(getString(R.string.scan_dialog_title), getString(R.string.scan_dialog_msg));
             }
         }
 

@@ -27,7 +27,7 @@ public class OpenCVManager {
     private static final int MSG_IMAGE_SCAN = 1;
     private static final int MSG_IMAGE_CROP = 2;
     
-    private org.opencv.android.BaseLoaderCallback mLoaderCallback;
+    private BaseLoaderCallback mLoaderCallback;
 	private boolean isInit = false;
 	private int[][] mPointArray;
 	
@@ -70,7 +70,7 @@ public class OpenCVManager {
 		}
 	}
 
-    public OpenCVManager (org.opencv.android.BaseLoaderCallback loaderCallback) {
+    public OpenCVManager (BaseLoaderCallback loaderCallback) {
         mLoaderCallback = loaderCallback;
         mImageHandle = new HandlerThread(THREAD_NAME);
         mImageHandle.start();
@@ -78,8 +78,8 @@ public class OpenCVManager {
     }
 
     public void init() {
-        if(!isInit && org.opencv.android.OpenCVLoader.initDebug()){
-            mLoaderCallback.onManagerConnected(org.opencv.android.LoaderCallbackInterface.SUCCESS);
+        if(!isInit){
+            mLoaderCallback.onManagerConnected();
             isInit = true;
         }
     }
@@ -180,6 +180,9 @@ public class OpenCVManager {
 		mCropPointArray[3][0] = pointMap.get(CropImageView.PointLocation.BL).x;
 		mCropPointArray[3][1] = pointMap.get(CropImageView.PointLocation.BL).y;
 		Point autoWH = getAutoWH();
+		if (mResultImageSide == null || mResultImageSide.length < 2) {
+			mResultImageSide = new int[2];
+		}
 		mResultImageSide[0] = autoWH.x;
 		mResultImageSide[1] = autoWH.y;
 		Log.d(TAG, "cropImage resultImageSide: Length = " + mResultImageSide[0] + ", width = " + mResultImageSide[1]);
@@ -193,15 +196,23 @@ public class OpenCVManager {
 	}
 
 	public Point getAutoWH() {
-		int  l = getLine(mCropPointArray[0][0], mCropPointArray[0][1], mCropPointArray[3][0], mCropPointArray[3][1]);
-		int  t = getLine(mCropPointArray[0][0], mCropPointArray[0][1], mCropPointArray[1][0], mCropPointArray[1][1]);
-		int  r = getLine(mCropPointArray[1][0], mCropPointArray[1][1], mCropPointArray[2][0], mCropPointArray[2][1]);
-		int  b = getLine(mCropPointArray[2][0], mCropPointArray[2][1], mCropPointArray[3][0], mCropPointArray[3][1]);
-		return new Point(Math.max(l, r), Math.max(t, b));
+		double w = Math.min(distancePointToPoint(mCropPointArray[0][0], mCropPointArray[0][1], mCropPointArray[1][0], mCropPointArray[1][1]),
+				distancePointToPoint(mCropPointArray[2][0], mCropPointArray[2][1], mCropPointArray[3][0], mCropPointArray[3][1]));
+
+		double h = Math.max(distancePointToLine(mCropPointArray[0][0], mCropPointArray[0][1],
+				mCropPointArray[2][0], mCropPointArray[2][1], mCropPointArray[3][0], mCropPointArray[3][1]), distancePointToLine(mCropPointArray[1][0], mCropPointArray[1][1],
+				mCropPointArray[2][0], mCropPointArray[2][1], mCropPointArray[3][0], mCropPointArray[3][1]));
+		return new Point((int) w, (int) h);
 	}
 
-	public int getLine(int x, int y, int tx, int ty) {
-		return (int) Math.sqrt((x - tx)*(x-tx) + (y - ty)*(y-ty));
+	public static double distancePointToLine(float x0, float y0, float x1, float y1, float x2, float y2) {
+		double distance = Math.abs((y2 - y1) * x0 + (x1 - x2) * y0 + x2 * y1 - x1 * y2) / Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x1 - x2, 2));
+
+		return distance;
+	}
+
+	public static double distancePointToPoint(float x1, float y1, float x2, float y2) {
+		return Math.sqrt((x1 - x2)*(x1-x2) + (y1 - y2)*(y1-y2));
 	}
 
 	public void setImageHandleListener(ImageHandleListener listener) {

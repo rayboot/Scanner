@@ -22,7 +22,3 @@ android {
         jni.srcDirs = [] //disable automatic ndk-build call
     }
 }
-
-dependencies {
-    compile files('libs/opencv library - 2.4.10.jar')
-}

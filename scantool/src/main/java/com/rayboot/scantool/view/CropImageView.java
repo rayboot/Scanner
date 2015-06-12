@@ -97,22 +97,22 @@ public class CropImageView extends ImageView {
 	public void setCropPiontMap(HashMap<PointLocation, Point> map) {
 		mPointMap = map;
 	}
-	
+
+	public void setRatio(float ratio) {
+		this.mRatio = ratio;
+	}
+
+	public void setOffset(float offset) {
+		this.mOffset = offset;
+	}
+
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
 		Drawable d = getDrawable();
 		mViewWidth = MeasureSpec.getSize(widthMeasureSpec);
 		mViewHight = MeasureSpec.getSize(heightMeasureSpec);
-		mRatio = mViewWidth / ((float) d.getIntrinsicWidth());
-		
-		mOffset = 0;
-		if (d != null) {
-			float aspectRatio = d.getIntrinsicHeight() / ((float) d.getIntrinsicWidth());
-			float imageHight = mViewWidth * aspectRatio;
-			mOffset = (mViewHight - imageHight) / 2;
-		}
-		
+
 		calculatePoints();
 	}
 	
@@ -174,12 +174,13 @@ public class CropImageView extends ImageView {
 	}
 	
 	public void release () {
-		mPaint.reset();
 		mAreaMap.clear();
 		mLastonTouchMoveEventX = -1;
 		mLastonTouchMoveEventY = -1;
 		mOffset = 0;
-		mPointMap.clear();
+		if (mPointMap != null) {
+			mPointMap.clear();
+		}
 		mUsingKey = null;
 		mRatio = 0;
 	}
