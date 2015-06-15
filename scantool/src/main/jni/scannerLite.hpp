@@ -476,25 +476,10 @@ void crop(const char* file, vector<Point> points, int jniside[], const char* res
 	LOGD("crop start");
 	// ¶ÁÈ¡Í¼Æ¬
 	Mat image = imread(file);
-	int row_starte = min_y(points);
-	int row_end = max_y(points);
-	int col_starte = min_x(points);
-	int col_end = max_x(points);
 
-	LOGD("crop op start newimage width = %i height = %i", row_starte-row_end, col_starte - col_end);
 	// ²Ã¼ôÍ¼Æ¬
-	int row,col,r_len = row_end - row_starte,c_len = col_end - col_starte;
-	if(r_len > c_len)
-	{
-		row = max(jniside[0], jniside[1]);
-		col = min(jniside[0], jniside[1]);
-	}
-	else
-	{
-		row = min(jniside[0], jniside[1]);
-		col = max(jniside[0], jniside[1]);
-	}
-
+	int row = jniside[1],col = jniside[0];
+	LOGD("crop op start newimage width = %i height = %i", col, row);
 	LOGD("crop op start newcropped_image row = %i col = %i", row, col);
 	Mat cropped_image = Mat(row, col, image.type());
 
