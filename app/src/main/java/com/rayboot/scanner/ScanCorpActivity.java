@@ -52,14 +52,7 @@ public class ScanCorpActivity extends ActionBarActivity implements ImageHandleLi
                         CropImageView view = new CropImageView(ScanCorpActivity.this);
                         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                         view.setLayoutParams(params);
-                        int width = view.getWidth();
-                        int height = view.getHeight();
-                        float ratio = (float) width / (float) mScrBitmap.getWidth();
-                        float aspectRatio = (float)mScrBitmap.getHeight() / (float)mScrBitmap.getWidth();
-                        float imageHight = ((float) width) * aspectRatio;
-                        float offset = ((float) height - imageHight) / 2.0F;
-                        view.setRatio(ratio);
-                        view.setOffset(offset);
+                        calculateOffsetAndRatio(view, mScrBitmap);
                         view.setImageBitmap(mScrBitmap);
                         view.setCropPiontMap(getPiontMap());
                         mContentLayout.addView(view);
@@ -178,6 +171,30 @@ public class ScanCorpActivity extends ActionBarActivity implements ImageHandleLi
     @Override
     public void onCropFinish() {
         mHandler.sendEmptyMessage(MSG_CROP_FINISH);
+    }
+
+    private void calculateOffsetAndRatio(CropImageView view, Bitmap source) {
+        if (source == null) {
+            return;
+        }
+        int width = view.getWidth();
+        int height = view.getHeight();
+        float ratio;
+        float horizontalOffset = 0f;
+        float verticalOffset = 0f;
+        if(Math.abs(width - source.getWidth()) > Math.abs(height - source.getHeight())) {
+            ratio = (float) width / (float) source.getWidth();
+            float aspectRatio = (float)source.getHeight() / (float)source.getWidth();
+            float imageHeight = ((float) width) * aspectRatio;
+            verticalOffset = ((float) height - imageHeight) / 2.0F;
+        } else {
+            ratio = (float) height / (float) source.getHeight();
+            float aspectRatio = (float)source.getWidth() / (float)source.getHeight();
+            float imageWidth = ((float) height) * aspectRatio;
+            horizontalOffset = ((float) width - imageWidth) / 2.0F;
+        }
+        view.setRatio(ratio);
+        view.setOffset(horizontalOffset, verticalOffset);
     }
 
 }

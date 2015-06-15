@@ -39,7 +39,6 @@ import java.util.Set;
  */
 public class CropImageView extends ImageView {
 	private static String TAG = "CropImageView";
-	
 	public enum PointLocation {
 		/**
 		 * 左边上的点
@@ -76,7 +75,8 @@ public class CropImageView extends ImageView {
 
 	private PointLocation mUsingKey;
 
-	private float mOffset;
+	private float mVerticalOffset;
+	private float mHorizontalOffset;
 
 	private float mLastonTouchMoveEventX = -1;
 
@@ -102,8 +102,9 @@ public class CropImageView extends ImageView {
 		this.mRatio = ratio;
 	}
 
-	public void setOffset(float offset) {
-		this.mOffset = offset;
+	public void setOffset(float horizontalOffset, float verticalOffset) {
+		this.mHorizontalOffset = horizontalOffset;
+		this.mVerticalOffset = verticalOffset;
 	}
 
 	@Override
@@ -120,16 +121,15 @@ public class CropImageView extends ImageView {
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 //		canvas.drawLine(0, 0, 1000, 1000, mPaint);
-		drawLine(canvas, getPointXFromMap(PointLocation.LT), getPointYFromMap(PointLocation.LT) + mOffset, getPointXFromMap(PointLocation.TR), getPointYFromMap(PointLocation.TR) + mOffset);
-		drawLine(canvas, getPointXFromMap(PointLocation.TR), getPointYFromMap(PointLocation.TR) + mOffset, getPointXFromMap(PointLocation.RB), getPointYFromMap(PointLocation.RB) + mOffset);
-		drawLine(canvas, getPointXFromMap(PointLocation.RB), getPointYFromMap(PointLocation.RB) + mOffset, getPointXFromMap(PointLocation.BL), getPointYFromMap(PointLocation.BL) + mOffset);
-		drawLine(canvas, getPointXFromMap(PointLocation.BL), getPointYFromMap(PointLocation.BL) + mOffset, getPointXFromMap(PointLocation.LT), getPointYFromMap(PointLocation.LT) + mOffset);
+		drawLine(canvas, getPointXFromMap(PointLocation.LT) + mHorizontalOffset, getPointYFromMap(PointLocation.LT) + mVerticalOffset, getPointXFromMap(PointLocation.TR) + mHorizontalOffset, getPointYFromMap(PointLocation.TR) + mVerticalOffset);
+		drawLine(canvas, getPointXFromMap(PointLocation.TR) + mHorizontalOffset, getPointYFromMap(PointLocation.TR) + mVerticalOffset, getPointXFromMap(PointLocation.RB) + mHorizontalOffset, getPointYFromMap(PointLocation.RB) + mVerticalOffset);
+		drawLine(canvas, getPointXFromMap(PointLocation.RB) + mHorizontalOffset, getPointYFromMap(PointLocation.RB) + mVerticalOffset, getPointXFromMap(PointLocation.BL) + mHorizontalOffset, getPointYFromMap(PointLocation.BL) + mVerticalOffset);
+		drawLine(canvas, getPointXFromMap(PointLocation.BL) + mHorizontalOffset, getPointYFromMap(PointLocation.BL) + mVerticalOffset, getPointXFromMap(PointLocation.LT) + mHorizontalOffset, getPointYFromMap(PointLocation.LT) + mVerticalOffset);
 	}
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		super.onTouchEvent(event);
-		Log.d("12345", "getAction = " + event.getAction());
 		switch (event.getAction()) {
 		case MotionEvent.ACTION_DOWN:
 			mUsingKey = null;
@@ -177,7 +177,8 @@ public class CropImageView extends ImageView {
 		mAreaMap.clear();
 		mLastonTouchMoveEventX = -1;
 		mLastonTouchMoveEventY = -1;
-		mOffset = 0;
+		mVerticalOffset = 0;
+		mHorizontalOffset = 0;
 		if (mPointMap != null) {
 			mPointMap.clear();
 		}
@@ -222,11 +223,11 @@ public class CropImageView extends ImageView {
 	}
 	
 	private float getXFromPoint(Point point) {
-		return point.x * mRatio;
+		return point.x * mRatio +  + mHorizontalOffset;
 	}
 	
 	private float getYFromPoint(Point point) {
-		return point.y * mRatio + mOffset;
+		return point.y * mRatio + mVerticalOffset;
 	}
 	
 	private void calculatePoints() {
