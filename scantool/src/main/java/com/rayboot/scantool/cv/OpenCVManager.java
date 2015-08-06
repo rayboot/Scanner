@@ -9,6 +9,8 @@ import android.util.Log;
 
 import com.rayboot.scantool.view.CropImageView;
 
+import org.opencv.core.Mat;
+
 import java.util.HashMap;
 
 
@@ -16,8 +18,10 @@ import java.util.HashMap;
  * Created by Administrator on 2015/4/21.
  */
 public class OpenCVManager {
-    
-    static {
+
+	private static OpenCVManager mInstance;
+
+	static {
     	System.loadLibrary("opencv_java");
     	System.loadLibrary("scan_tool");
     }
@@ -26,21 +30,24 @@ public class OpenCVManager {
     private static final String THREAD_NAME = "Image_Handle";
     private static final int MSG_IMAGE_SCAN = 1;
     private static final int MSG_IMAGE_CROP = 2;
-    
-    private BaseLoaderCallback mLoaderCallback;
+	private static final int MSG_MAT_SCAN = 3;
+
 	private boolean isInit = false;
 	private int[][] mPointArray;
-	
+
 	private HandlerThread mImageHandle;
 	private ImageHandler mHandler;
 	private ImageHandleListener mImageHandleListener;
-	
+
+	private MatHandleListener mMatHandleListener;
+
 	private String mCropImgPath;
 	private int[][] mCropPointArray;
 	private int[] mResultImageSide;
-	
-	
-	
+	private boolean mCancel;
+	private long mCurTime;
+
+
 	class ImageHandler extends Handler {
 		private OpenCVManager mOpenCVManager;
 
@@ -48,38 +55,56 @@ public class OpenCVManager {
 			super(looper);
 			mOpenCVManager = opencv;
 		}
-		
+
 		@Override
 		public void handleMessage(Message msg) {
+			if (mCancel) {
+				return;
+			}
 			switch (msg.what) {
 			case MSG_IMAGE_SCAN:
 				String path = (String) msg.obj;
-				mPointArray = mOpenCVManager.nScan(path);
+				mPointArray = OpenCVNative.nScan(path);
 				mImageHandleListener.onScanFinish();
 				break;
 			case MSG_IMAGE_CROP:
 				String resultPath = (String) msg.obj;
-				nCrop(mCropImgPath, mCropPointArray, mResultImageSide, resultPath);
+				OpenCVNative.nCrop(mCropImgPath, mCropPointArray, mResultImageSide, resultPath);
 				mImageHandleListener.onCropFinish();
+				break;
+			case MSG_MAT_SCAN:
+				long time = System.currentTimeMillis();
+				mCurTime = time;
+				Mat mat = (Mat) msg.obj;
+				int[][] result = OpenCVNative.nScanFromMat(mat.nativeObj);
+				if (mMatHandleListener != null && time == mCurTime) {
+					mMatHandleListener.onScanMatFinish(result);
+				}
 				break;
 
 			default:
 				break;
 			}
-			
+
 		}
 	}
 
-    public OpenCVManager (BaseLoaderCallback loaderCallback) {
-        mLoaderCallback = loaderCallback;
+    private OpenCVManager () {
         mImageHandle = new HandlerThread(THREAD_NAME);
         mImageHandle.start();
         mHandler = new ImageHandler(this, mImageHandle.getLooper());
     }
 
-    public void init() {
+	public static OpenCVManager getInstance() {
+		if (mInstance == null) {
+			mInstance = new OpenCVManager();
+		}
+		return mInstance;
+	}
+
+	public void init(BaseLoaderCallback loaderCallback) {
         if(!isInit){
-            mLoaderCallback.onManagerConnected();
+			loaderCallback.onManagerConnected();
             isInit = true;
         }
     }
@@ -87,15 +112,14 @@ public class OpenCVManager {
     public void findBrim(final String path) {
     	Log.d("OpenCVManager", "path = " + path);
     	mHandler.post(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				mHandler.sendMessage(Message.obtain(mHandler, MSG_IMAGE_SCAN, path));
 			}
 		});
-//    	mPointArray = nScan(path);
     }
-    
+
 	public Point getLTPoint() {
     	if (mPointArray == null) {
     		return null;
@@ -106,7 +130,7 @@ public class OpenCVManager {
     	}
     	return new Point(array[0], array[1]);
 	}
-    
+
     public Point getTRPoint() {
     	if (mPointArray == null) {
     		return null;
@@ -117,7 +141,7 @@ public class OpenCVManager {
     	}
     	return new Point(array[0], array[1]);
 	}
-    
+
     public Point getRBPiont() {
     	if (mPointArray == null) {
     		return null;
@@ -128,7 +152,7 @@ public class OpenCVManager {
     	}
     	return new Point(array[0], array[1]);
 	}
-    
+
     public Point getBLPoint() {
     	if (mPointArray == null) {
     		return null;
@@ -156,6 +180,7 @@ public class OpenCVManager {
 		mCropPointArray[3][1] = pointMap.get(CropImageView.PointLocation.BL).y;
 		mResultImageSide = resultImageSide;
 		Log.d(TAG, "cropImage resultImageSide: Length = " + resultImageSide[0] + ", width = " + resultImageSide[1]);
+		mHandler.removeMessages(MSG_IMAGE_SCAN);
 		mHandler.post(new Runnable() {
 
 			@Override
@@ -186,6 +211,7 @@ public class OpenCVManager {
 		mResultImageSide[0] = autoWH.x;
 		mResultImageSide[1] = autoWH.y;
 		Log.d(TAG, "cropImage resultImageSide: Length = " + mResultImageSide[0] + ", width = " + mResultImageSide[1]);
+		mHandler.removeMessages(MSG_IMAGE_CROP);
 		mHandler.post(new Runnable() {
 
 			@Override
@@ -218,8 +244,40 @@ public class OpenCVManager {
 	public void setImageHandleListener(ImageHandleListener listener) {
 		mImageHandleListener = listener;
 	}
-    
-    private static native int[][] nScan(String path);
-    private static native void nCrop(String path, int[][] pointArray, int[] resultImageSide, String resultPath);
+
+	public void setMatHandleListener(MatHandleListener matHandleListener) {
+		this.mMatHandleListener = matHandleListener;
+	}
+
+	public void scanFromMat(Mat mat) {
+		if (mat == null || mat.rows() <= 0 || mat.cols() <= 0) {
+			return;
+		}
+		Mat tmpMat = new Mat();
+		mat.copyTo(tmpMat);
+		mHandler.removeMessages(MSG_MAT_SCAN);
+		Message msg = Message.obtain(mHandler, MSG_MAT_SCAN, tmpMat);
+		mHandler.sendMessage(msg);
+	}
+
+	public void reset() {
+		mCropImgPath = null;
+		mCropPointArray = null;
+		mPointArray = null;
+		mResultImageSide = null;
+		isInit = false;
+	}
+
+	public void release() {
+		reset();
+		mCancel = true;
+		mHandler.removeMessages(MSG_IMAGE_SCAN);
+		mHandler.removeMessages(MSG_IMAGE_CROP);
+		mHandler.removeMessages(MSG_MAT_SCAN);
+		mHandler = null;
+		mImageHandle.quit();
+		mImageHandle = null;
+		mInstance = null;
+	}
 
 }

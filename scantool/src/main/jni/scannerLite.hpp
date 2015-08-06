@@ -25,29 +25,29 @@ using namespace std;
  * @param canny - output edge image
  */
 void getCanny(Mat gray, Mat &canny) {
-  Mat thres;
-  double high_thres = threshold(gray, thres, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU), low_thres = high_thres * 0.5;
-  cv::Canny(gray, canny, low_thres, high_thres);
+	Mat thres;
+	double high_thres = threshold(gray, thres, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU), low_thres = high_thres * 0.5;
+	cv::Canny(gray, canny, low_thres, high_thres);
 }
 
 struct Line {
-  Point _p1;
-  Point _p2;
-  Point _center;
+	Point _p1;
+	Point _p2;
+	Point _center;
 
-  Line(Point p1, Point p2) {
-	_p1 = p1;
-	_p2 = p2;
-	_center = Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
-  }
+	Line(Point p1, Point p2) {
+		_p1 = p1;
+		_p2 = p2;
+		_center = Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+	}
 };
 
 bool cmp_y(const Line &p1, const Line &p2) {
-  return p1._center.y < p2._center.y;
+	return p1._center.y < p2._center.y;
 }
 
 bool cmp_x(const Line &p1, const Line &p2) {
-  return p1._center.x < p2._center.x;
+	return p1._center.x < p2._center.x;
 }
 
 /**
@@ -57,165 +57,165 @@ bool cmp_x(const Line &p1, const Line &p2) {
  * @return Intersect Point
  */
 Point2f computeIntersect(Line l1, Line l2) {
-  int x1 = l1._p1.x, x2 = l1._p2.x, y1 = l1._p1.y, y2 = l1._p2.y;
-  int x3 = l2._p1.x, x4 = l2._p2.x, y3 = l2._p1.y, y4 = l2._p2.y;
-  if (float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)) {
-	Point2f pt;
-	pt.x = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / d;
-	pt.y = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / d;
-	return pt;
-  }
-  return Point2f(-1, -1);
+	int x1 = l1._p1.x, x2 = l1._p2.x, y1 = l1._p1.y, y2 = l1._p2.y;
+	int x3 = l2._p1.x, x4 = l2._p2.x, y3 = l2._p1.y, y4 = l2._p2.y;
+	if (float d = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)) {
+		Point2f pt;
+		pt.x = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / d;
+		pt.y = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / d;
+		return pt;
+	}
+	return Point2f(-1, -1);
 }
 
 /**
- * ·½·¨Ò»
+ * æ–¹æ³•ä¸€
  */
 void scan(const char* file, bool debug = true) {
 	LOGD("path: %s \n",file);
-  /* get input image */
-  Mat img = imread(file);
-  // resize input image to img_proc to reduce computation
-  Mat img_proc;
-  int w = img.size().width, h = img.size().height, min_w = 200;
-  double scale = min(10.0, w * 1.0 / min_w);
-  int w_proc = w * 1.0 / scale, h_proc = h * 1.0 / scale;
-  if (w_proc == 0)
-  {
-	  LOGD("w_proc is 0");
-  }
-
-  if (h_proc == 0)
-  {
-    LOGD("h_proc is 0");
-  }
-
-  if (scale == 0)
-  {
-    LOGD("scale is 0");
-  }
-
-  if (w == 0)
-  {
-    LOGD("w is 0");
-  }
-
-  if (h == 0)
-  {
-    LOGD("h is 0");
-  }
-
-  resize(img, img_proc, Size(w_proc, h_proc));
-  Mat img_dis = img_proc.clone();
-
-  /* get four outline edges of the document */
-  // get edges of the image
-  Mat gray, canny;
-  cvtColor(img_proc, gray, CV_BGR2GRAY);
-  getCanny(gray, canny);
-
-  // extract lines from the edge image
-  vector<Vec4i> lines;
-  vector<Line> horizontals, verticals;
-  HoughLinesP(canny, lines, 1, CV_PI / 180, w_proc / 3, w_proc / 3, 20);
-  for (size_t i = 0; i < lines.size(); i++) {
-	Vec4i v = lines[i];
-	double delta_x = v[0] - v[2], delta_y = v[1] - v[3];
-	Line l(Point(v[0], v[1]), Point(v[2], v[3]));
-	// get horizontal lines and vertical lines respectively
-	if (fabs(delta_x) > fabs(delta_y)) {
-	  horizontals.push_back(l);
-	} else {
-	  verticals.push_back(l);
+	/* get input image */
+	Mat img = imread(file);
+	// resize input image to img_proc to reduce computation
+	Mat img_proc;
+	int w = img.size().width, h = img.size().height, min_w = 200;
+	double scale = min(10.0, w * 1.0 / min_w);
+	int w_proc = w * 1.0 / scale, h_proc = h * 1.0 / scale;
+	if (w_proc == 0)
+	{
+		LOGD("w_proc is 0");
 	}
-	// for visualization only
-	if (debug)
-	  line(img_proc, Point(v[0], v[1]), Point(v[2], v[3]), Scalar(0, 0, 255), 1, CV_AA);
-  }
 
-  // edge cases when not enough lines are detected
-  if (horizontals.size() < 2) {
-	if (horizontals.size() == 0 || horizontals[0]._center.y > h_proc / 2) {
-	  horizontals.push_back(Line(Point(0, 0), Point(w_proc - 1, 0)));
+	if (h_proc == 0)
+	{
+		LOGD("h_proc is 0");
 	}
-	if (horizontals.size() == 0 || horizontals[0]._center.y <= h_proc / 2) {
-	  horizontals.push_back(Line(Point(0, h_proc - 1), Point(w_proc - 1, h_proc - 1)));
+
+	if (scale == 0)
+	{
+		LOGD("scale is 0");
 	}
-  }
-  if (verticals.size() < 2) {
-	if (verticals.size() == 0 || verticals[0]._center.x > w_proc / 2) {
-	  verticals.push_back(Line(Point(0, 0), Point(0, h_proc - 1)));
+
+	if (w == 0)
+	{
+		LOGD("w is 0");
 	}
-	if (verticals.size() == 0 || verticals[0]._center.x <= w_proc / 2) {
-	  verticals.push_back(Line(Point(w_proc - 1, 0), Point(w_proc - 1, h_proc - 1)));
+
+	if (h == 0)
+	{
+		LOGD("h is 0");
 	}
-  }
-  // sort lines according to their center point
-  sort(horizontals.begin(), horizontals.end(), cmp_y);
-  sort(verticals.begin(), verticals.end(), cmp_x);
-  // for visualization only
-  if (debug) {
-	line(img_proc, horizontals[0]._p1, horizontals[0]._p2, Scalar(0, 255, 0), 2, CV_AA);
-	line(img_proc, horizontals[horizontals.size() - 1]._p1, horizontals[horizontals.size() - 1]._p2, Scalar(0, 255, 0), 2, CV_AA);
-	line(img_proc, verticals[0]._p1, verticals[0]._p2, Scalar(255, 0, 0), 2, CV_AA);
-	line(img_proc, verticals[verticals.size() - 1]._p1, verticals[verticals.size() - 1]._p2, Scalar(255, 0, 0), 2, CV_AA);
-  }
 
-  /* perspective transformation */
+	resize(img, img_proc, Size(w_proc, h_proc));
+	Mat img_dis = img_proc.clone();
 
-  // define the destination image size: A4 - 200 PPI
-  int w_a4 = 1654, h_a4 = 2339;
-  //int w_a4 = 595, h_a4 = 842;
-  Mat dst = Mat::zeros(h_a4, w_a4, CV_8UC3);
+	/* get four outline edges of the document */
+	// get edges of the image
+	Mat gray, canny;
+	cvtColor(img_proc, gray, CV_BGR2GRAY);
+	getCanny(gray, canny);
 
-  // corners of destination image with the sequence [tl, tr, bl, br]
-  vector<Point2f> dst_pts, img_pts;
-  dst_pts.push_back(Point(0, 0));
-  dst_pts.push_back(Point(w_a4 - 1, 0));
-  dst_pts.push_back(Point(0, h_a4 - 1));
-  dst_pts.push_back(Point(w_a4 - 1, h_a4 - 1));
+	// extract lines from the edge image
+	vector<Vec4i> lines;
+	vector<Line> horizontals, verticals;
+	HoughLinesP(canny, lines, 1, CV_PI / 180, w_proc / 3, w_proc / 3, 20);
+	for (size_t i = 0; i < lines.size(); i++) {
+		Vec4i v = lines[i];
+		double delta_x = v[0] - v[2], delta_y = v[1] - v[3];
+		Line l(Point(v[0], v[1]), Point(v[2], v[3]));
+		// get horizontal lines and vertical lines respectively
+		if (fabs(delta_x) > fabs(delta_y)) {
+			horizontals.push_back(l);
+		} else {
+			verticals.push_back(l);
+		}
+		// for visualization only
+		if (debug)
+			line(img_proc, Point(v[0], v[1]), Point(v[2], v[3]), Scalar(0, 0, 255), 1, CV_AA);
+	}
 
-  // corners of source image with the sequence [tl, tr, bl, br]
-  img_pts.push_back(computeIntersect(horizontals[0], verticals[0]));
-  img_pts.push_back(computeIntersect(horizontals[0], verticals[verticals.size() - 1]));
-  img_pts.push_back(computeIntersect(horizontals[horizontals.size() - 1], verticals[0]));
-  img_pts.push_back(computeIntersect(horizontals[horizontals.size() - 1], verticals[verticals.size() - 1]));
-
-  // convert to original image scale
-  for (size_t i = 0; i < img_pts.size(); i++) {
+	// edge cases when not enough lines are detected
+	if (horizontals.size() < 2) {
+		if (horizontals.size() == 0 || horizontals[0]._center.y > h_proc / 2) {
+			horizontals.push_back(Line(Point(0, 0), Point(w_proc - 1, 0)));
+		}
+		if (horizontals.size() == 0 || horizontals[0]._center.y <= h_proc / 2) {
+			horizontals.push_back(Line(Point(0, h_proc - 1), Point(w_proc - 1, h_proc - 1)));
+		}
+	}
+	if (verticals.size() < 2) {
+		if (verticals.size() == 0 || verticals[0]._center.x > w_proc / 2) {
+			verticals.push_back(Line(Point(0, 0), Point(0, h_proc - 1)));
+		}
+		if (verticals.size() == 0 || verticals[0]._center.x <= w_proc / 2) {
+			verticals.push_back(Line(Point(w_proc - 1, 0), Point(w_proc - 1, h_proc - 1)));
+		}
+	}
+	// sort lines according to their center point
+	sort(horizontals.begin(), horizontals.end(), cmp_y);
+	sort(verticals.begin(), verticals.end(), cmp_x);
 	// for visualization only
 	if (debug) {
-	  circle(img_proc, img_pts[i], 10, Scalar(255, 255, 0), 3);
+		line(img_proc, horizontals[0]._p1, horizontals[0]._p2, Scalar(0, 255, 0), 2, CV_AA);
+		line(img_proc, horizontals[horizontals.size() - 1]._p1, horizontals[horizontals.size() - 1]._p2, Scalar(0, 255, 0), 2, CV_AA);
+		line(img_proc, verticals[0]._p1, verticals[0]._p2, Scalar(255, 0, 0), 2, CV_AA);
+		line(img_proc, verticals[verticals.size() - 1]._p1, verticals[verticals.size() - 1]._p2, Scalar(255, 0, 0), 2, CV_AA);
 	}
-	img_pts[i].x *= scale;
-	img_pts[i].y *= scale;
-  }
 
-  // get transformation matrix
-  Mat transmtx = getPerspectiveTransform(img_pts, dst_pts);
+	/* perspective transformation */
 
-  // apply perspective transformation
-  warpPerspective(img, dst, transmtx, dst.size());
+	// define the destination image size: A4 - 200 PPI
+	int w_a4 = 1654, h_a4 = 2339;
+	//int w_a4 = 595, h_a4 = 842;
+	Mat dst = Mat::zeros(h_a4, w_a4, CV_8UC3);
 
-  // save dst img
-  imwrite("/sdcard/doc2.jpg", dst);
+	// corners of destination image with the sequence [tl, tr, bl, br]
+	vector<Point2f> dst_pts, img_pts;
+	dst_pts.push_back(Point(0, 0));
+	dst_pts.push_back(Point(w_a4 - 1, 0));
+	dst_pts.push_back(Point(0, h_a4 - 1));
+	dst_pts.push_back(Point(w_a4 - 1, h_a4 - 1));
 
-  // for visualization only
+	// corners of source image with the sequence [tl, tr, bl, br]
+	img_pts.push_back(computeIntersect(horizontals[0], verticals[0]));
+	img_pts.push_back(computeIntersect(horizontals[0], verticals[verticals.size() - 1]));
+	img_pts.push_back(computeIntersect(horizontals[horizontals.size() - 1], verticals[0]));
+	img_pts.push_back(computeIntersect(horizontals[horizontals.size() - 1], verticals[verticals.size() - 1]));
+
+	// convert to original image scale
+	for (size_t i = 0; i < img_pts.size(); i++) {
+		// for visualization only
+		if (debug) {
+			circle(img_proc, img_pts[i], 10, Scalar(255, 255, 0), 3);
+		}
+		img_pts[i].x *= scale;
+		img_pts[i].y *= scale;
+	}
+
+	// get transformation matrix
+	Mat transmtx = getPerspectiveTransform(img_pts, dst_pts);
+
+	// apply perspective transformation
+	warpPerspective(img, dst, transmtx, dst.size());
+
+	// save dst img
+	imwrite("/sdcard/doc2.jpg", dst);
+
+	// for visualization only
 }
 
 /**
- * ·½·¨¶ş
+ * æ–¹æ³•äºŒ
  */
 void find_squares(const char* file)
 {
-	IplImage* pImgSrc = NULL;    //Ô´Í¼Ïñ
-	IplImage* pImg8u = NULL;     //»Ò¶ÈÍ¼
-	IplImage* pImgCanny = NULL;  //±ßÔµ¼ì²âºóµÄÍ¼
-	IplImage* pImgDst = NULL;    //ÔÚÍ¼ÏñÉÏ»­ÉÏ¼ì²âµ½µÄÖ±ÏßºóµÄÍ¼Ïñ
+	IplImage* pImgSrc = NULL;    //æºå›¾åƒ
+	IplImage* pImg8u = NULL;     //ç°åº¦å›¾
+	IplImage* pImgCanny = NULL;  //è¾¹ç¼˜æ£€æµ‹åçš„å›¾
+	IplImage* pImgDst = NULL;    //åœ¨å›¾åƒä¸Šç”»ä¸Šæ£€æµ‹åˆ°çš„ç›´çº¿åçš„å›¾åƒ
 	CvSeq* lines = NULL;
 	CvMemStorage* storage = NULL;
 
-	/*±ßÔµ¼ì²â*/
+	/*è¾¹ç¼˜æ£€æµ‹*/
 	pImgSrc = cvLoadImage (file, 1);
 	pImg8u = cvCreateImage (cvGetSize(pImgSrc), IPL_DEPTH_8U, 1);
 	pImgCanny = cvCreateImage (cvGetSize(pImgSrc), IPL_DEPTH_8U, 1);
@@ -223,13 +223,13 @@ void find_squares(const char* file)
 	cvCvtColor (pImgSrc, pImg8u, CV_BGR2GRAY);
 	cvCanny (pImg8u, pImgCanny, 20, 200, 3);
 
-	/*¼ì²âÖ±Ïß*/
+	/*æ£€æµ‹ç›´çº¿*/
 	storage = cvCreateMemStorage (0);
 	lines = cvHoughLines2 (pImgCanny, storage, CV_HOUGH_PROBABILISTIC, 1, CV_PI/180, 80, 200, 10);
 	pImgDst = cvCreateImage (cvGetSize(pImgSrc), IPL_DEPTH_8U, 3);
 	cvCvtColor (pImg8u, pImgDst, CV_GRAY2BGR);
 
-	/*ÔÚpImgDstÉÏ»­³ö¼ì²âµ½µÄÖ±Ïß*/
+	/*åœ¨pImgDstä¸Šç”»å‡ºæ£€æµ‹åˆ°çš„ç›´çº¿*/
 	for (int i = 0; i < lines->total; i++)
 	{
 		CvPoint* line = (CvPoint*)cvGetSeqElem (lines, i);
@@ -246,123 +246,131 @@ void find_squares(const char* file)
 }
 
 double angle(cv::Point pt1, cv::Point pt2, cv::Point pt0 ) {
-    double dx1 = pt1.x - pt0.x;
-    double dy1 = pt1.y - pt0.y;
-    double dx2 = pt2.x - pt0.x;
-    double dy2 = pt2.y - pt0.y;
-    return (dx1*dx2 + dy1*dy2)/sqrt((dx1*dx1 + dy1*dy1)*(dx2*dx2 + dy2*dy2) + 1e-10);
+	double dx1 = pt1.x - pt0.x;
+	double dy1 = pt1.y - pt0.y;
+	double dx2 = pt2.x - pt0.x;
+	double dy2 = pt2.y - pt0.y;
+	return (dx1*dx2 + dy1*dy2)/sqrt((dx1*dx1 + dy1*dy1)*(dx2*dx2 + dy2*dy2) + 1e-10);
+}
+
+void find_squares_from_mat(Mat image, vector<vector<Point> >& squares)
+{
+	LOGD("mat col : %i\n", image.cols);
+	LOGD("mat row : %i \n", image.rows);
+	// blur will enhance edge detection
+	Mat blurred(image);
+	medianBlur(image, blurred, 9);
+
+	Mat gray0(blurred.size(), CV_8U), gray;
+	vector<vector<Point> > contours;
+
+	// find squares in every color plane of the image
+	for (int c = 0; c < 3; c++)
+	{
+		int ch[] = {c, 0};
+		mixChannels(&blurred, 1, &gray0, 1, ch, 1);
+
+		// try several threshold levels
+		const int threshold_level = 2;
+		for (int l = 0; l < threshold_level; l++)
+		{
+			// Use Canny instead of zero threshold level!
+			// Canny helps to catch squares with gradient shading
+			if (l == 0)
+			{
+				Canny(gray0, gray, 10, 20, 3); //
+
+				// Dilate helps to remove potential holes between edge segments
+				dilate(gray, gray, Mat(), Point(-1,-1));
+			}
+			else
+			{
+				gray = gray0 >= (l+1) * 255 / threshold_level;
+			}
+
+			// Find contours and store them in a list
+			findContours(gray, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
+
+			// Test contours
+			vector<Point> approx;
+			for (size_t i = 0; i < contours.size(); i++)
+			{
+				// approximate contour with accuracy proportional
+				// to the contour perimeter
+				approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.02, true);
+
+				// Note: absolute value of an area is used because
+				// area may be positive or negative - in accordance with the
+				// contour orientation
+				if (approx.size() == 4 &&
+					fabs(contourArea(Mat(approx))) > 1000 &&
+					isContourConvex(Mat(approx)))
+				{
+					double maxCosine = 0;
+
+					for (int j = 2; j < 5; j++)
+					{
+						double cosine = fabs(angle(approx[j%4], approx[j-2], approx[j-1]));
+						maxCosine = MAX(maxCosine, cosine);
+					}
+
+					if (maxCosine < 0.3)
+						squares.push_back(approx);
+				}
+			}
+		}
+	}
+	if(squares.size() == 0)
+	{
+		vector<Point> approx;
+		approx.push_back(Point(0,0));
+		approx.push_back(Point(image.size().width,0));
+		approx.push_back(Point(image.size().width,image.size().height));
+		approx.push_back(Point(0,image.size().height));
+		squares.push_back(approx);
+	}
+
+	blurred.release();
 }
 
 /**
- * ·½·¨Èı
+ * æ–¹æ³•ä¸‰
  */
 void find_squares2(const char* file, vector<vector<Point> >& squares)
 {
 	LOGD("path: %s \n",file);
 	Mat image = imread(file);
-    // blur will enhance edge detection
-    Mat blurred(image);
-    medianBlur(image, blurred, 9);
-
-    Mat gray0(blurred.size(), CV_8U), gray;
-    vector<vector<Point> > contours;
-
-    // find squares in every color plane of the image
-    for (int c = 0; c < 3; c++)
-    {
-        int ch[] = {c, 0};
-        mixChannels(&blurred, 1, &gray0, 1, ch, 1);
-
-        // try several threshold levels
-        const int threshold_level = 2;
-        for (int l = 0; l < threshold_level; l++)
-        {
-            // Use Canny instead of zero threshold level!
-            // Canny helps to catch squares with gradient shading
-            if (l == 0)
-            {
-                Canny(gray0, gray, 10, 20, 3); //
-
-                // Dilate helps to remove potential holes between edge segments
-                dilate(gray, gray, Mat(), Point(-1,-1));
-            }
-            else
-            {
-                    gray = gray0 >= (l+1) * 255 / threshold_level;
-            }
-
-            // Find contours and store them in a list
-            findContours(gray, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
-
-            // Test contours
-            vector<Point> approx;
-            for (size_t i = 0; i < contours.size(); i++)
-            {
-                    // approximate contour with accuracy proportional
-                    // to the contour perimeter
-                    approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.02, true);
-
-                    // Note: absolute value of an area is used because
-                    // area may be positive or negative - in accordance with the
-                    // contour orientation
-                    if (approx.size() == 4 &&
-                            fabs(contourArea(Mat(approx))) > 1000 &&
-                            isContourConvex(Mat(approx)))
-                    {
-                            double maxCosine = 0;
-
-                            for (int j = 2; j < 5; j++)
-                            {
-                                    double cosine = fabs(angle(approx[j%4], approx[j-2], approx[j-1]));
-                                    maxCosine = MAX(maxCosine, cosine);
-                            }
-
-                            if (maxCosine < 0.3)
-                                    squares.push_back(approx);
-                    }
-            }
-        }
-    }
-    if(squares.size() == 0)
-    {
-    	vector<Point> approx;
-    	approx.push_back(Point(0,0));
-    	approx.push_back(Point(image.size().width,0));
-    	approx.push_back(Point(image.size().width,image.size().height));
-    	approx.push_back(Point(0,image.size().height));
-    	squares.push_back(approx);
-    }
-    image.release();
-    blurred.release();
-    LOGD("squares size: %i \n", squares.size());
+	find_squares_from_mat(image, squares);
+	image.release();
+	LOGD("squares size: %i \n", squares.size());
 }
 
 int max_x(vector <Point> points)
-{ //ÇóÏòÁ¿×î´óÖµ
+{ //æ±‚å‘é‡æœ€å¤§å€¼
 	int maxdata = points[0].x;
-	int len=points.size(),i;  //a.size() ÇóµÃÏòÁ¿µ±Ç°´æ´¢ÊıÁ¿
+	int len=points.size(),i;  //a.size() æ±‚å¾—å‘é‡å½“å‰å­˜å‚¨æ•°é‡
 	for(i=1;i<len;i++)
 	{
-	 if (points[i].x > maxdata)
-		 maxdata = points[i].x;
+		if (points[i].x > maxdata)
+			maxdata = points[i].x;
 	}
 	return maxdata;
 }
 
 int max_y(vector <Point> points)
-{ //ÇóÏòÁ¿×î´óÖµ
+{ //æ±‚å‘é‡æœ€å¤§å€¼
 	int maxdata = points[0].y;
-	int len = points.size(),i;  //a.size() ÇóµÃÏòÁ¿µ±Ç°´æ´¢ÊıÁ¿
+	int len = points.size(),i;  //a.size() æ±‚å¾—å‘é‡å½“å‰å­˜å‚¨æ•°é‡
 	for(i = 1 ; i < len ; i++)
 	{
-	 if (points[i].y > maxdata)
-		 maxdata = points[i].y;
+		if (points[i].y > maxdata)
+			maxdata = points[i].y;
 	}
 	return maxdata;
 }
 
 float min_x(vector <Point> points)
-{ //ÇóÏòÁ¿×îĞ¡Öµ
+{ //æ±‚å‘é‡æœ€å°å€¼
 	float mindata=points[0].x;
 	int len=points.size(),i;
 	for(i=1;i<len;i++)
@@ -374,7 +382,7 @@ float min_x(vector <Point> points)
 }
 
 float min_y(vector <Point> points)
-{ //ÇóÏòÁ¿×îĞ¡Öµ
+{ //æ±‚å‘é‡æœ€å°å€¼
 	float mindata=points[0].y;
 	int len=points.size(),i;
 	for(i=1;i<len;i++)
@@ -386,7 +394,7 @@ float min_y(vector <Point> points)
 }
 
 /**
- * ¸øÒÑÖªµÄËÄ¸öµãÈ·¶¨Î»ÖÃ
+ * ç»™å·²çŸ¥çš„å››ä¸ªç‚¹ç¡®å®šä½ç½®
  */
 void findPoint(CvPoint2D32f scrQuad[], CvPoint2D32f result[])
 {
@@ -444,7 +452,7 @@ void findPoint(CvPoint2D32f scrQuad[], CvPoint2D32f result[])
 	}
 
 	for (i=0 ; i<4 ; i++) {
-			LOGD("find scr point x = %f y = %f", scrQuad[i].x,scrQuad[i].y);
+		LOGD("find scr point x = %f y = %f", scrQuad[i].x,scrQuad[i].y);
 	}
 
 	for (i=0 ; i<4 ; i++) {
@@ -469,22 +477,27 @@ void findPointFromVector(vector<Point> scrVector, vector<Point>& result)
 	}
 }
 
+void crop_from_mat(Mat image, vector<Point> points, int jniside[], Mat & resultMat)
+{
+
+}
+
 /**
- * ÇĞÍ¼·½·¨
+ * åˆ‡å›¾æ–¹æ³•
  */
 void crop(const char* file, vector<Point> points, int jniside[], const char* resultFile){
 	LOGD("crop start");
-	// ¶ÁÈ¡Í¼Æ¬
+	// è¯»å–å›¾ç‰‡
 	Mat image = imread(file);
-
-	// ²Ã¼ôÍ¼Æ¬
+	Mat tmp_mat;
+	// è£å‰ªå›¾ç‰‡
 	int row = jniside[1],col = jniside[0];
 	LOGD("crop op start newimage width = %i height = %i", col, row);
 	LOGD("crop op start newcropped_image row = %i col = %i", row, col);
 	Mat cropped_image = Mat(row, col, image.type());
 
 	LOGD("fuzhi op start");
-	// Í¸ÊÓ±ä»»
+	// é€è§†å˜æ¢
 	IplImage *src,*dst,temp,temp2;
 	temp = IplImage(image);
 	src = &temp;
@@ -524,17 +537,23 @@ void crop(const char* file, vector<Point> points, int jniside[], const char* res
 	cvWarpPerspective(src, dst, wap_matrix);
 
 	LOGD("imwrite op start");
-	Mat tmp_mat = Mat(dst);
+	tmp_mat = Mat(dst);
+
+	LOGD("crop mat col : %i\n", tmp_mat.cols);
+	LOGD("crop mat row : %i\n", tmp_mat.rows);
+	LOGD("crop resultFile : %s\n", resultFile);
+
 	imwrite(resultFile, tmp_mat);
-//	dst.release();
-//	blurred.release();
-	LOGD("Release op tmp_mat.release();");
-//	image.release();
-	tmp_mat.release();
+
+
 	LOGD("Release op cropped_image.release();");
 	cropped_image.release();
 	LOGD("Release op cvReleaseMat(&wap_matrix);");
 	cvReleaseMat(&wap_matrix);
+	LOGD("Release op tmp_mat.release();");
+	tmp_mat.release();
+//	dst.release();
+//	blurred.release();
 //	LOGD("Release op cvReleaseImage(&dst);");
 //	cvReleaseImage(&dst);
 //	cvReleaseImage(&src);

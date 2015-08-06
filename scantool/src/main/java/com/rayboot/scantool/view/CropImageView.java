@@ -17,6 +17,7 @@
 package com.rayboot.scantool.view;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -39,6 +40,9 @@ import java.util.Set;
  */
 public class CropImageView extends ImageView {
 	private static String TAG = "CropImageView";
+	private int mSrcBitmapWidth;
+	private int mSrcBitmapHeight;
+
 	public enum PointLocation {
 		/**
 		 * 左边上的点
@@ -107,6 +111,11 @@ public class CropImageView extends ImageView {
 		this.mVerticalOffset = verticalOffset;
 	}
 
+	public void setSrcImageWAndH(int width, int height) {
+		mSrcBitmapWidth = width;
+		mSrcBitmapHeight = height;
+	}
+
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
@@ -115,16 +124,69 @@ public class CropImageView extends ImageView {
 		mViewHight = MeasureSpec.getSize(heightMeasureSpec);
 
 		calculatePoints();
+		calculateOffsetAndRatio(mViewWidth, mViewHight);
+	}
+
+	private void calculateOffsetAndRatio(int width, int height) {
+		float ratio;
+		float horizontalOffset = 0f;
+		float verticalOffset = 0f;
+		// 计算缩放比
+		if (mSrcBitmapWidth > width || mSrcBitmapHeight > height) {
+			float viewAspectRatio = width / ((float) height);
+			float bitmapAspectRatio = mSrcBitmapWidth / ((float) mSrcBitmapHeight);
+			if (viewAspectRatio > bitmapAspectRatio) {
+				// 卡高度
+				ratio = (float) height / (float) mSrcBitmapHeight;
+				float resultWidth = ((float) height) * bitmapAspectRatio;
+				horizontalOffset = ((float) width - resultWidth) / 2.0F;
+			} else {
+				// 卡宽度
+				ratio = (float) width / (float) mSrcBitmapWidth;
+				float resultHeight = ((float) width) / bitmapAspectRatio;
+				verticalOffset = ((float) height - resultHeight) / 2.0F;
+			}
+		} else {
+			ratio = 1.0f;
+			horizontalOffset = (width - mSrcBitmapWidth) / 2.0f;
+			verticalOffset = (height - mSrcBitmapHeight) / 2.0f;
+		}
+
+		setRatio(ratio);
+		setOffset(horizontalOffset, verticalOffset);
 	}
 	
 	@Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 //		canvas.drawLine(0, 0, 1000, 1000, mPaint);
-		drawLine(canvas, getPointXFromMap(PointLocation.LT) + mHorizontalOffset, getPointYFromMap(PointLocation.LT) + mVerticalOffset, getPointXFromMap(PointLocation.TR) + mHorizontalOffset, getPointYFromMap(PointLocation.TR) + mVerticalOffset);
-		drawLine(canvas, getPointXFromMap(PointLocation.TR) + mHorizontalOffset, getPointYFromMap(PointLocation.TR) + mVerticalOffset, getPointXFromMap(PointLocation.RB) + mHorizontalOffset, getPointYFromMap(PointLocation.RB) + mVerticalOffset);
-		drawLine(canvas, getPointXFromMap(PointLocation.RB) + mHorizontalOffset, getPointYFromMap(PointLocation.RB) + mVerticalOffset, getPointXFromMap(PointLocation.BL) + mHorizontalOffset, getPointYFromMap(PointLocation.BL) + mVerticalOffset);
-		drawLine(canvas, getPointXFromMap(PointLocation.BL) + mHorizontalOffset, getPointYFromMap(PointLocation.BL) + mVerticalOffset, getPointXFromMap(PointLocation.LT) + mHorizontalOffset, getPointYFromMap(PointLocation.LT) + mVerticalOffset);
+		float startX = getPointXFromMap(PointLocation.LT) + mHorizontalOffset;
+		float startY = getPointYFromMap(PointLocation.LT) + mVerticalOffset;
+		float endX = getPointXFromMap(PointLocation.TR) + mHorizontalOffset;
+		float endY = getPointYFromMap(PointLocation.TR) + mVerticalOffset;
+		drawLine(canvas, startX, startY, endX, endY);
+		Log.d(TAG, "1 startX : " + startX + " startY : " + startY + " endX : " + endX + " endY : " + endY);
+
+		startX = getPointXFromMap(PointLocation.TR) + mHorizontalOffset;
+		startY = getPointYFromMap(PointLocation.TR) + mVerticalOffset;
+		endX = getPointXFromMap(PointLocation.RB) + mHorizontalOffset;
+		endY = getPointYFromMap(PointLocation.RB) + mVerticalOffset;
+		drawLine(canvas, startX, startY, endX, endY);
+		Log.d(TAG, "2 startX : " + startX + " startY : " + startY + " endX : " + endX + " endY : " + endY);
+
+		startX = getPointXFromMap(PointLocation.RB) + mHorizontalOffset;
+		startY = getPointYFromMap(PointLocation.RB) + mVerticalOffset;
+		endX = getPointXFromMap(PointLocation.BL) + mHorizontalOffset;
+		endY = getPointYFromMap(PointLocation.BL) + mVerticalOffset;
+		drawLine(canvas, startX, startY, endX, endY);
+		Log.d(TAG, "3 startX : " + startX + " startY : " + startY + " endX : " + endX + " endY : " + endY);
+
+		startX = getPointXFromMap(PointLocation.BL) + mHorizontalOffset;
+		startY = getPointYFromMap(PointLocation.BL) + mVerticalOffset;
+		endX = getPointXFromMap(PointLocation.LT) + mHorizontalOffset;
+		endY = getPointYFromMap(PointLocation.LT) + mVerticalOffset;
+		drawLine(canvas, startX, startY, endX, endY);
+		Log.d(TAG, "4 startX : " + startX + " startY : " + startY + " endX : " + endX + " endY : " + endY);
 	}
 	
 	@Override

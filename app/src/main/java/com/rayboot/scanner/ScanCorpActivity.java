@@ -52,7 +52,7 @@ public class ScanCorpActivity extends ActionBarActivity implements ImageHandleLi
                         CropImageView view = new CropImageView(ScanCorpActivity.this);
                         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
                         view.setLayoutParams(params);
-                        calculateOffsetAndRatio(view, mScrBitmap);
+                        view.setSrcImageWAndH(mScrBitmap.getWidth(), mScrBitmap.getHeight());
                         view.setImageBitmap(mScrBitmap);
                         view.setCropPiontMap(getPiontMap());
                         mContentLayout.addView(view);
@@ -94,7 +94,8 @@ public class ScanCorpActivity extends ActionBarActivity implements ImageHandleLi
         mContentLayout = (LinearLayout) getLayoutInflater().inflate(R.layout.activity_scan_corp, null);
         setContentView(mContentLayout);
         Intent i = getIntent();
-        mContentImagePath = i.getStringExtra(OpenCVConstant.KEY_SCAN_SRC_IMG);
+//        mContentImagePath = i.getStringExtra(OpenCVConstant.KEY_SCAN_SRC_IMG);
+        mContentImagePath = "/sdcard/Download/tf_1438828143916.jpg";
         mResultImageSide = i.getIntArrayExtra(OpenCVConstant.KEY_HANDLED_IMAGE_SIDE);
         resultImagePath = i.getStringExtra(OpenCVConstant.KEY_SCAN_RESULT_IMG);
 
@@ -116,8 +117,9 @@ public class ScanCorpActivity extends ActionBarActivity implements ImageHandleLi
     @Override
     protected void onStart() {
         super.onStart();
-        mOpenCVManager = new OpenCVManager(mLoaderCallback);
-        mOpenCVManager.init();
+        mOpenCVManager = OpenCVManager.getInstance();
+        mOpenCVManager.reset();
+        mOpenCVManager.init(mLoaderCallback);
         mOpenCVManager.setImageHandleListener(this);
     }
 
@@ -173,28 +175,6 @@ public class ScanCorpActivity extends ActionBarActivity implements ImageHandleLi
         mHandler.sendEmptyMessage(MSG_CROP_FINISH);
     }
 
-    private void calculateOffsetAndRatio(CropImageView view, Bitmap source) {
-        if (source == null) {
-            return;
-        }
-        int width = view.getWidth();
-        int height = view.getHeight();
-        float ratio;
-        float horizontalOffset = 0f;
-        float verticalOffset = 0f;
-        if(Math.abs(width - source.getWidth()) > Math.abs(height - source.getHeight())) {
-            ratio = (float) width / (float) source.getWidth();
-            float aspectRatio = (float)source.getHeight() / (float)source.getWidth();
-            float imageHeight = ((float) width) * aspectRatio;
-            verticalOffset = ((float) height - imageHeight) / 2.0F;
-        } else {
-            ratio = (float) height / (float) source.getHeight();
-            float aspectRatio = (float)source.getWidth() / (float)source.getHeight();
-            float imageWidth = ((float) height) * aspectRatio;
-            horizontalOffset = ((float) width - imageWidth) / 2.0F;
-        }
-        view.setRatio(ratio);
-        view.setOffset(horizontalOffset, verticalOffset);
-    }
+
 
 }
