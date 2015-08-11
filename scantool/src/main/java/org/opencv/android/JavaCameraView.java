@@ -1,5 +1,7 @@
 package org.opencv.android;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import android.content.Context;
@@ -32,6 +34,7 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
     protected static final int MAGIC_TEXTURE_ID = 10;
     private static final String TAG = "JavaCameraView";
 
+	protected CameraSizeComparator sizeComparator = new CameraSizeComparator();
     protected byte mBuffer[];
     protected Mat[] mFrameChain;
     private int mChainIdx = 0;
@@ -41,6 +44,21 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
     protected Camera mCamera;
     protected JavaCameraFrame[] mCameraFrame;
     protected SurfaceTexture mSurfaceTexture;
+
+	public  class CameraSizeComparator implements Comparator<Camera.Size> {
+        public int compare(Camera.Size lhs, Camera.Size rhs) {
+            if(lhs.width == rhs.width){
+                return 0;
+            }
+            else if(lhs.width > rhs.width){
+                return 1;
+            }
+            else{
+                return -1;
+            }
+        }
+
+    }
 
     public static class JavaCameraSizeAccessor implements ListItemAccessor {
 
@@ -149,6 +167,9 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
                     Log.d(TAG, "Set preview size to " + Integer.valueOf((int) frameSize.width) + "x" + Integer.valueOf((int) frameSize.height));
                     params.setPreviewSize((int) frameSize.width, (int) frameSize.height);
 
+                    Camera.Size picSize = calculatePicSize(sizes, (float) (frameSize.width / frameSize.height), 800);
+                    params.setPictureSize(picSize.width, picSize.height);
+
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH && !android.os.Build.MODEL.equals("GT-I9100"))
                         params.setRecordingHint(true);
 
@@ -213,6 +234,34 @@ public class JavaCameraView extends CameraBridgeViewBase implements PreviewCallb
         }
 
         return result;
+    }
+	
+	protected Camera.Size calculatePicSize(List<Camera.Size> list, float th, int minWidth) {
+        Collections.sort(list, sizeComparator);
+
+        int i = list.size();
+        for(; i > 0 ; i--){
+            Camera.Size s = list.get(i - 1);
+            if((s.width >= minWidth) && equalRate(s, th)){
+                Log.i(TAG, "PreviewSize:w = " + s.width + "h = " + s.height);
+                break;
+            }
+        }
+        if(i == 0){
+            i = list.size();
+        }
+        return list.get(i - 1);
+    }
+
+    protected boolean equalRate(Camera.Size s, float rate){
+        float r = (float)(s.width)/(float)(s.height);
+        if(Math.abs(r - rate) <= 0)
+        {
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
     protected void releaseCamera() {

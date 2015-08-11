@@ -21,6 +21,7 @@ import java.util.List;
 public class JavaCameraViewForPortrait extends JavaCameraView implements Camera.PreviewCallback {
     private static final String TAG = "ScanCameraV2View";
 
+
     public JavaCameraViewForPortrait(Context context, int cameraId) {
         super(context, cameraId);
     }
@@ -112,6 +113,9 @@ public class JavaCameraViewForPortrait extends JavaCameraView implements Camera.
                     params.setPreviewFormat(ImageFormat.NV21);
                     Log.d(TAG, "Set preview size to " + Integer.valueOf((int) frameSize.width) + "x" + Integer.valueOf((int) frameSize.height));
                     params.setPreviewSize((int) frameSize.width, (int) frameSize.height);
+
+                    Camera.Size picSize = calculatePicSize(sizes, (float) (frameSize.width / frameSize.height), 800);
+                    params.setPictureSize(picSize.width, picSize.height);
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH && !android.os.Build.MODEL.equals("GT-I9100"))
                         params.setRecordingHint(true);
