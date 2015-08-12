@@ -320,16 +320,6 @@ void find_squares_from_mat(Mat image, vector<vector<Point> >& squares)
 			}
 		}
 	}
-	if(squares.size() == 0)
-	{
-		vector<Point> approx;
-		approx.push_back(Point(0,0));
-		approx.push_back(Point(image.size().width,0));
-		approx.push_back(Point(image.size().width,image.size().height));
-		approx.push_back(Point(0,image.size().height));
-		squares.push_back(approx);
-	}
-
 	blurred.release();
 }
 
@@ -341,6 +331,15 @@ void find_squares2(const char* file, vector<vector<Point> >& squares)
 	LOGD("path: %s \n",file);
 	Mat image = imread(file);
 	find_squares_from_mat(image, squares);
+	if(squares.size() == 0)
+	{
+		vector<Point> approx;
+		approx.push_back(Point(0,0));
+		approx.push_back(Point(image.size().width,0));
+		approx.push_back(Point(image.size().width,image.size().height));
+		approx.push_back(Point(0,image.size().height));
+		squares.push_back(approx);
+	}
 	image.release();
 	LOGD("squares size: %i \n", squares.size());
 }

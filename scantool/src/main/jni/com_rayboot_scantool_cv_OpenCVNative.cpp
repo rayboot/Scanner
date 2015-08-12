@@ -101,10 +101,15 @@ JNIEXPORT jobjectArray JNICALL Java_com_rayboot_scantool_cv_OpenCVNative_nScanFr
 	find_squares_from_mat(*src_mat, squares);
 	LOGD("jni find_squares_from_mat end");
 
+	if (squares.empty())
+	{
+		return NULL;
+	}
+
 	vector<Point> v = squares[0];
 	if (v.size() < 4)
 	{
-		return 0;
+		return NULL;
 	}
 
 	vector<Point> resultVector;
