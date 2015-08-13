@@ -321,6 +321,8 @@ void find_squares_from_mat(Mat image, vector<vector<Point> >& squares)
 		}
 	}
 	blurred.release();
+	gray0.release();
+	gray.release();
 }
 
 /**
@@ -551,8 +553,7 @@ void crop(const char* file, vector<Point> points, int jniside[], const char* res
 	cvReleaseMat(&wap_matrix);
 	LOGD("Release op tmp_mat.release();");
 	tmp_mat.release();
-//	dst.release();
-//	blurred.release();
+	image.release();
 //	LOGD("Release op cvReleaseImage(&dst);");
 //	cvReleaseImage(&dst);
 //	cvReleaseImage(&src);

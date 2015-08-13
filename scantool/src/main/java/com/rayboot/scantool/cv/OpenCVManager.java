@@ -77,6 +77,7 @@ public class OpenCVManager {
 				mCurTime = time;
 				Mat mat = (Mat) msg.obj;
 				int[][] result = OpenCVNative.nScanFromMat(mat.nativeObj);
+				mat.release();
 				if (mMatHandleListener != null && time == mCurTime) {
 					mMatHandleListener.onScanMatFinish(result);
 				}
