@@ -15,7 +15,8 @@ import java.util.HashMap;
 
 
 /**
- * Created by Administrator on 2015/4/21.
+ * openCV调用入口类
+ * Created by wudi on 2015/4/21.
  */
 public class OpenCVManager {
 
@@ -49,11 +50,9 @@ public class OpenCVManager {
 
 
 	class ImageHandler extends Handler {
-		private OpenCVManager mOpenCVManager;
 
-		public ImageHandler(OpenCVManager opencv, Looper looper) {
+		public ImageHandler(Looper looper) {
 			super(looper);
-			mOpenCVManager = opencv;
 		}
 
 		@Override
@@ -63,16 +62,19 @@ public class OpenCVManager {
 			}
 			switch (msg.what) {
 			case MSG_IMAGE_SCAN:
+				// 图片扫描
 				String path = (String) msg.obj;
 				mPointArray = OpenCVNative.nScan(path);
 				mImageHandleListener.onScanFinish();
 				break;
 			case MSG_IMAGE_CROP:
+				// 图片裁剪
 				String resultPath = (String) msg.obj;
 				OpenCVNative.nCrop(mCropImgPath, mCropPointArray, mResultImageSide, resultPath);
 				mImageHandleListener.onCropFinish();
 				break;
 			case MSG_MAT_SCAN:
+				// Mat扫描
 				long time = System.currentTimeMillis();
 				mCurTime = time;
 				Mat mat = (Mat) msg.obj;
@@ -93,7 +95,7 @@ public class OpenCVManager {
     private OpenCVManager () {
         mImageHandle = new HandlerThread(THREAD_NAME);
         mImageHandle.start();
-        mHandler = new ImageHandler(this, mImageHandle.getLooper());
+        mHandler = new ImageHandler(mImageHandle.getLooper());
     }
 
 	public static OpenCVManager getInstance() {
@@ -110,6 +112,10 @@ public class OpenCVManager {
         }
     }
 
+	/**
+	 * 根据图片路径找边
+	 * @param path
+	 */
     public void findBrim(final String path) {
     	Log.d("OpenCVManager", "path = " + path);
     	mHandler.post(new Runnable() {
@@ -121,6 +127,10 @@ public class OpenCVManager {
 		});
     }
 
+	/**
+	 * 从扫描结果中获取左上点
+	 * @return
+	 */
 	public Point getLTPoint() {
     	if (mPointArray == null) {
     		return null;
@@ -132,6 +142,10 @@ public class OpenCVManager {
     	return new Point(array[0], array[1]);
 	}
 
+	/**
+	 * 从扫描结果中获取上右点
+	 * @return
+	 */
     public Point getTRPoint() {
     	if (mPointArray == null) {
     		return null;
@@ -143,6 +157,10 @@ public class OpenCVManager {
     	return new Point(array[0], array[1]);
 	}
 
+	/**
+	 * 从扫描结果中获取右下点
+	 * @return
+	 */
     public Point getRBPiont() {
     	if (mPointArray == null) {
     		return null;
@@ -154,6 +172,10 @@ public class OpenCVManager {
     	return new Point(array[0], array[1]);
 	}
 
+	/**
+	 * 从扫描结果中获取下左点
+	 * @return
+	 */
     public Point getBLPoint() {
     	if (mPointArray == null) {
     		return null;
@@ -165,6 +187,13 @@ public class OpenCVManager {
     	return new Point(array[0], array[1]);
 	}
 
+	/**
+	 * 根据指定的分辨率截图
+	 * @param path
+	 * @param pointMap
+	 * @param resultImageSide
+	 * @param resultPath
+	 */
 	public void cropImage(String path, HashMap<CropImageView.PointLocation,Point> pointMap, int[] resultImageSide, final String resultPath){
 		if (pointMap == null || pointMap.size() < 4) {
 			return;
@@ -191,6 +220,12 @@ public class OpenCVManager {
 		});
 	}
 
+	/**
+	 * 自适应分辨率截图
+	 * @param path
+	 * @param pointMap
+	 * @param resultPath
+	 */
 	public void autoCropImage(String path, HashMap<CropImageView.PointLocation,Point> pointMap, final String resultPath){
 		if (pointMap == null || pointMap.size() < 4) {
 			return;
@@ -222,7 +257,7 @@ public class OpenCVManager {
 		});
 	}
 
-	public Point getAutoWH() {
+	private Point getAutoWH() {
 		double w = Math.min(distancePointToPoint(mCropPointArray[0][0], mCropPointArray[0][1], mCropPointArray[1][0], mCropPointArray[1][1]),
 				distancePointToPoint(mCropPointArray[2][0], mCropPointArray[2][1], mCropPointArray[3][0], mCropPointArray[3][1]));
 
@@ -232,12 +267,30 @@ public class OpenCVManager {
 		return new Point((int) w, (int) h);
 	}
 
+	/**
+	 * 计算点到线的距离
+	 * @param x0
+	 * @param y0
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 * @return
+	 */
 	public static double distancePointToLine(float x0, float y0, float x1, float y1, float x2, float y2) {
 		double distance = Math.abs((y2 - y1) * x0 + (x1 - x2) * y0 + x2 * y1 - x1 * y2) / Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x1 - x2, 2));
 
 		return distance;
 	}
 
+	/**
+	 * 计算点到点的距离
+	 * @param x1
+	 * @param y1
+	 * @param x2
+	 * @param y2
+	 * @return
+	 */
 	public static double distancePointToPoint(float x1, float y1, float x2, float y2) {
 		return Math.sqrt((x1 - x2)*(x1-x2) + (y1 - y2)*(y1-y2));
 	}
@@ -250,6 +303,10 @@ public class OpenCVManager {
 		this.mMatHandleListener = matHandleListener;
 	}
 
+	/**
+	 * 通过mat找边
+	 * @param mat
+	 */
 	public void scanFromMat(Mat mat) {
 		if (mat == null || mat.rows() <= 0 || mat.cols() <= 0) {
 			return;

@@ -102,11 +102,20 @@ public class CropImageView extends ImageView {
 		mPointMap = map;
 	}
 
-	public void setRatio(float ratio) {
+	/**
+	 * 设置实际图片和view显示图片的缩放比
+	 * @param ratio
+	 */
+	private void setRatio(float ratio) {
 		this.mRatio = ratio;
 	}
 
-	public void setOffset(float horizontalOffset, float verticalOffset) {
+	/**
+	 * 设置图片缩放后的偏移量
+	 * @param horizontalOffset
+	 * @param verticalOffset
+	 */
+	private void setOffset(float horizontalOffset, float verticalOffset) {
 		this.mHorizontalOffset = horizontalOffset;
 		this.mVerticalOffset = verticalOffset;
 	}
@@ -119,7 +128,6 @@ public class CropImageView extends ImageView {
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-		Drawable d = getDrawable();
 		mViewWidth = MeasureSpec.getSize(widthMeasureSpec);
 		mViewHight = MeasureSpec.getSize(heightMeasureSpec);
 
@@ -299,7 +307,10 @@ public class CropImageView extends ImageView {
 		
 		calculateRect();
 	}
-	
+
+	/**
+	 * 计算每个点的触摸区域
+	 */
 	private void calculateRect() {
 		Point ltPoint = mPointMap.get(PointLocation.LT);
 		Point trPoint = mPointMap.get(PointLocation.TR);
@@ -316,6 +327,11 @@ public class CropImageView extends ImageView {
 		
 	}
 
+	/**
+	 * 通过点查找其所在的区域
+	 * @param point
+	 * @return
+	 */
 	private Rect getRectFromPoint(Point point) {
 		float minLen = dip2px(getContext(), 40f);
 		int left = (int) (getXFromPoint(point) - minLen + 0.5);

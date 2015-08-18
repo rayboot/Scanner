@@ -18,6 +18,10 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.List;
 
+/**
+ * 竖屏下相机页面
+ * by wudi 2015-08-18
+ */
 public class JavaCameraViewForPortrait extends JavaCameraView implements Camera.PreviewCallback {
     private static final String TAG = "ScanCameraV2View";
 
@@ -218,6 +222,6 @@ public class JavaCameraViewForPortrait extends JavaCameraView implements Camera.
             mRgba.release();
             if (mRotated != null) mRotated.release();
         }
-    };
+    }
 
 }
